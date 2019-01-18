@@ -1,0 +1,73 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 12 14:54:09 2017
+
+@author: Venkatraman Narayanan
+@brief:	 Web scraping routine to notify availability of your 
+	 favorite movie tickets in your theatre of choice
+"""
+
+import urllib2
+from bs4 import BeautifulSoup
+import sys
+import time
+from twilio.rest import TwilioRestClient
+flag = False
+
+def sendsms():
+    
+    sid = "Your service ID from Twilio"
+    auth = "Your Authentication code from twilio"
+    twilioCli = TwilioRestClient(sid, auth)
+    # myTwilioNumber = "Your Twilio service number"
+    myCellPhoneNums = "SMS to be sent to"
+    mymsg = 'Start your reactor - tickets available!'
+    for num in myCellPhoneNums:
+        twilioCli.messages.create(body=mymsg, from_=myTwilioNumber, to=num)
+
+def myfunc():
+    import smtplib
+    
+    fromaddr = 'fromaddress@example.com'
+    toaddrs  = 'toaddress@example.com'
+    msg = 'Movie is now available at the theatre!!'
+    
+    
+    # Credentials for logging into your email account
+    username = 'myusername'
+    password = 'mypassword'
+    header  = 'From: forscience.ts12@gmail.com\n'
+    header += 'To: %s\n' % ','.join(toaddrs)
+    header += 'Subject: Tickets Available!\n\n'
+    message = header + msg
+
+    # Sending the mail by connecting to SMTP server 
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(username,password)
+    server.sendmail(fromaddr, toaddrs, message)
+    server.quit()    
+
+def movie():
+    
+    page = urllib2.urlopen("https://www.jazzcinemas.com/chennai/imaxshowtimes")
+    soup = BeautifulSoup(page)
+    allmovs = soup.findAll('h6')
+    movlist = ['CAPTAIN', 'AMERICA', 'CIVIL', 'BATMAN', 'SUPERMAN']
+        
+    for movie in allmovs:
+        for keyword in movlist:
+            if keyword in movie.text.upper():
+                myfunc(movie)
+                sendsms()
+                print 'came into loop'
+                sys.exit(0)
+                global flag
+                flag = True 
+
+if flag:
+    sys.exit(0)
+else:
+    time.sleep(60*15)
+    movie()
+    
